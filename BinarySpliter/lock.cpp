@@ -1,5 +1,6 @@
 #include "lock.h"
 #include <fstream>
+#include <stdio.h>
 
 int encryptor::key = 1;
 
@@ -8,27 +9,30 @@ void encryptor::Lock(std::string inputFilePath, std::string outputFilePath) {
 	// 키 값 입력
 	getKey();
 
-	std::ifstream fileIn(inputFilePath, std::ios::binary);
-	std::ofstream fileOut(outputFilePath, std::ios::binary);
-	const int BUFFER_SIZE = 1024;
-	char buffer[BUFFER_SIZE];
+	FILE* fileIn;
+	FILE* fileOut;
+	fopen_s(&fileIn, inputFilePath.c_str(), "rb");
+	fopen_s(&fileOut, outputFilePath.c_str() , "wb");
+	const int BUFFER_SIZE = 1024*1024*128;
+	static char buffer[BUFFER_SIZE];
+
+	int currentDoneMB = 0;
 	
-	if (fileIn.is_open()) {
-		int readCount;
-		while (true) {
-			readCount = fileIn.read(buffer, BUFFER_SIZE).gcount();
-			if (readCount == 0)
-				break;
+	int readCount;
+	while (true) {
+		readCount = fread(buffer, sizeof(char), BUFFER_SIZE, fileIn);
+		if (readCount == 0)
+			break;
 
-			// 버퍼 단위로 암호화
-			encoding(buffer,readCount);
+		// 버퍼 단위로 암호화
+		encoding(buffer,readCount);
 
-			fileOut.write(buffer, readCount);
-		}
+		fwrite(buffer, sizeof(char), readCount, fileOut);
+		std::cout << (currentDoneMB += readCount/1024/1024) << "MB 완료" << std::endl;
 	}
 
-	fileIn.close();
-	fileOut.close();
+	fclose(fileIn);
+	fclose(fileOut);
 }
 
 void encryptor::encoding(char* buffer, const int contentSize) {
