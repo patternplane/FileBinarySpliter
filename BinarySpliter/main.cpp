@@ -10,11 +10,14 @@ int main() {
 
 	std::string inputPath;
 	std::string outputPath;
+	char buffer[2048];
 	
 	std::cout << "입력파일 이름을 입력하세요 : \r\n";
-	std::cin >> inputPath;
+	std::cin.getline(buffer, 2048);
+	inputPath = *(new std::string(buffer));
 	std::cout << "출력파일 이름을 입력하세요 : \r\n";
-	std::cin >> outputPath;
+	std::cin.getline(buffer, 2048);
+	outputPath = *(new std::string(buffer));
 
 	encryptor::Lock(inputPath,outputPath);
 
